@@ -51,13 +51,9 @@ EchoChat 是一个完整的 Android 应用，开箱即用。
    - 前往 [Releases](https://github.com/tea-whale/EchoChat/releases) 页面下载最新版本的 APK 安装包。
    - 将 APK 传输至 Android 手机并安装（安装时可能需要开启“允许未知来源应用”权限）。
 
-2. **注册与登录**
-   - 打开 App 后，按照引导完成**注册与鉴权**即可开始使用。
-   - （后续将支持通过邮箱/手机号等方式注册，安装包分发也将通过鉴权系统进行管理。）
+2. **配置 LLM 供应商（可选）**
+   - 请申请自己的 LLM API Key（如 OpenAI、DeepSeek 等），在 App 内的“我的” -> “供应商管理”中添加。
 
-3. **配置 LLM 供应商（可选）**
-   - 如果你有自己的 LLM API Key（如 OpenAI、DeepSeek 等），可以在 App 内的“我的” -> “供应商管理”中添加。
-   - 如果不配置，EchoChat 会使用内置的默认通道（具体可用性请以实际为准）。
 
 > 💡 **给开发者**：如果你想自行编译或二次开发，请克隆仓库后在 Android Studio 中打开，等待 Gradle 同步完成后即可运行。API Key 相关配置请参考项目内的代码注释。
 
