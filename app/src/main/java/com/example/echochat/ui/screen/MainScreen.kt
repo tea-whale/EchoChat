@@ -72,12 +72,8 @@ fun MainScreen() {
         ) {
             composable(Screen.ChatList.route) {
                 ChatListScreen(
-                    onChatClick = { agentId, groupId ->
-                        if (groupId != null) {
-                            navController.navigate("chat_detail?groupId=$groupId")
-                        } else {
-                            navController.navigate("chat_detail?agentId=$agentId")
-                        }
+                    onChatClick = { agentId, groupId, conversationId ->
+                        navController.navigate("chat_detail?agentId=$agentId&groupId=$groupId&conversationId=$conversationId")
                     }
                 )
             }
@@ -95,25 +91,20 @@ fun MainScreen() {
                 MeScreen()
             }
             composable(
-                route = "chat_detail?agentId={agentId}&groupId={groupId}",
+                route = "chat_detail?agentId={agentId}&groupId={groupId}&conversationId={conversationId}",
                 arguments = listOf(
-                    navArgument("agentId") { 
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null 
-                    },
-                    navArgument("groupId") { 
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null
-                    }
+                    navArgument("agentId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("groupId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("conversationId") { type = NavType.StringType; nullable = true; defaultValue = null }
                 )
             ) { backStackEntry ->
                 val agentId = backStackEntry.arguments?.getString("agentId")?.toLongOrNull()
                 val groupId = backStackEntry.arguments?.getString("groupId")?.toLongOrNull()
+                val conversationId = backStackEntry.arguments?.getString("conversationId")?.toLongOrNull()
                 ChatDetailScreen(
                     agentId = agentId,
                     groupId = groupId,
+                    //conversationId = conversationId,
                     onBack = { navController.popBackStack() }
                 )
             }

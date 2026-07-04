@@ -3,6 +3,7 @@ package com.example.echochat.ui.screen
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,9 +22,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.echochat.R
 import com.example.echochat.data.local.entity.AgentEntity
 import com.example.echochat.data.local.entity.MemoryEntity
 import com.example.echochat.data.local.entity.ProviderEntity
@@ -56,26 +59,40 @@ fun ContactsScreen(
                     }) {
                         Icon(Icons.Default.Add, contentDescription = "添加助手")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
-        }
+        },
+        containerColor = Color.Transparent
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding)
-        ) {
-            items(agents) { agent ->
-                AgentItem(
-                    agent = agent,
-                    onClick = { onAgentClick(agent.id) },
-                    onEdit = { 
-                        agentToEdit = agent
-                        showEditDialog = true 
-                    },
-                    onDelete = { viewModel.deleteAgent(agent) },
-                    onManageMemory = {
-                        showMemoryDialogByAgentId = agent.id
-                    }
-                )
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            Image(
+                painter = painterResource(id = R.drawable.background),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                alpha = 0.3f
+            )
+
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(agents) { agent ->
+                    AgentItem(
+                        agent = agent,
+                        onClick = { onAgentClick(agent.id) },
+                        onEdit = { 
+                            agentToEdit = agent
+                            showEditDialog = true 
+                        },
+                        onDelete = { viewModel.deleteAgent(agent) },
+                        onManageMemory = {
+                            showMemoryDialogByAgentId = agent.id
+                        }
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 72.dp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                    )
+                }
             }
         }
     }
@@ -123,6 +140,7 @@ fun AgentItem(
 
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         headlineContent = { Text(agent.name) },
         supportingContent = { Text(agent.description, maxLines = 1) },
         leadingContent = {
@@ -230,7 +248,6 @@ fun AgentEditDialog(
     
     val context = LocalContext.current
 
-    // 图片选择器
     val avatarLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -266,7 +283,6 @@ fun AgentEditDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
-                // 头像设置
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth().clickable { avatarLauncher.launch("image/*") }
@@ -284,7 +300,6 @@ fun AgentEditDialog(
                     }
                 }
 
-                // 背景图设置
                 OutlinedCard(
                     onClick = { backgroundLauncher.launch("image/*") },
                     modifier = Modifier.fillMaxWidth()

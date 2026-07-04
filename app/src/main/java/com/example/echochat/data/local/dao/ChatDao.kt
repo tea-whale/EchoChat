@@ -101,11 +101,17 @@ interface ChatDao {
     @Query("SELECT * FROM conversations WHERE id = :id")
     suspend fun getConversationById(id: Long): ConversationEntity?
 
-    @Query("SELECT * FROM conversations WHERE agentId = :agentId LIMIT 1")
-    suspend fun getConversationByAgentId(agentId: Long): ConversationEntity?
+    @Query("SELECT * FROM conversations WHERE agentId = :agentId ORDER BY createdAt DESC LIMIT 1")
+    suspend fun getLatestConversationByAgentId(agentId: Long): ConversationEntity?
 
-    @Query("SELECT * FROM conversations WHERE groupId = :groupId LIMIT 1")
-    suspend fun getConversationByGroupId(groupId: Long): ConversationEntity?
+    @Query("SELECT * FROM conversations WHERE groupId = :groupId ORDER BY createdAt DESC LIMIT 1")
+    suspend fun getLatestConversationByGroupId(groupId: Long): ConversationEntity?
+    
+    @Query("DELETE FROM messages WHERE conversationId = :conversationId")
+    suspend fun deleteMessagesByConversation(conversationId: Long)
+
+    @Query("DELETE FROM conversations WHERE id = :id")
+    suspend fun deleteConversation(id: Long)
 
     @Query("""
         SELECT 
@@ -139,6 +145,9 @@ interface ChatDao {
     @Query("SELECT * FROM messages WHERE conversationId = :conversationId ORDER BY createdAt DESC LIMIT :limit")
     suspend fun getRecentMessages(conversationId: Long, limit: Int): List<MessageEntity>
 
+    @Delete
+    suspend fun deleteMessage(message: MessageEntity)
+
     // Memory
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMemory(memory: MemoryEntity)
@@ -157,11 +166,30 @@ interface ChatDao {
 
     // Moment
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMoment(moment: MomentEntity)
+    suspend fun insertMoment(moment: MomentEntity): Long
 
     @Query("""
         SELECT m.id, m.agentId, a.name as agentName, a.avatar as agentAvatar, m.content, m.createdAt
         FROM moments m LEFT JOIN agents a ON m.agentId = a.id ORDER BY m.createdAt DESC
     """)
     fun getAllMomentsWithAgent(): Flow<List<MomentWithAgent>>
+
+    @Delete
+    suspend fun deleteMoment(moment: MomentEntity)
+
+    @Query("SELECT * FROM moments WHERE id = :id")
+    suspend fun getMomentById(id: Long): MomentEntity?
+
+    // Likes & Comments
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLike(like: LikeEntity)
+
+    @Query("SELECT * FROM likes WHERE momentId = :momentId ORDER BY createdAt ASC")
+    fun getLikesForMoment(momentId: Long): Flow<List<LikeEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertComment(comment: CommentEntity)
+
+    @Query("SELECT * FROM comments WHERE momentId = :momentId ORDER BY createdAt ASC")
+    fun getCommentsForMoment(momentId: Long): Flow<List<CommentEntity>>
 }

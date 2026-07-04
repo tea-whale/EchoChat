@@ -3,6 +3,7 @@ package com.example.echochat.ui.screen
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,17 +19,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.echochat.R
 import com.example.echochat.data.local.entity.ProviderEntity
 import com.example.echochat.data.local.entity.UserEntity
 import com.example.echochat.ui.viewmodel.ProviderViewModel
 import com.example.echochat.ui.viewmodel.UserViewModel
 import com.example.echochat.util.saveUriToInternalStorage
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MeScreen(
     providerViewModel: ProviderViewModel = hiltViewModel(),
@@ -42,64 +47,83 @@ fun MeScreen(
     var providerToEdit by remember { mutableStateOf<ProviderEntity?>(null) }
     var showEditUserDialog by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // 用户信息区域
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showEditUserDialog = true }
-                .padding(24.dp, 32.dp, 24.dp, 24.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 用户头像
-            Surface(
-                modifier = Modifier.size(64.dp),
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                if (user?.avatar != null) {
-                    AsyncImage(
-                        model = user!!.avatar,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(user?.name?.take(1) ?: "U", style = MaterialTheme.typography.headlineMedium)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("我的") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
+        },
+        containerColor = Color.Transparent
+    ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            Image(
+                painter = painterResource(id = R.drawable.background),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                alpha = 0.3f
+            )
+
+            Column(modifier = Modifier.fillMaxSize()) {
+                // 用户信息区域
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showEditUserDialog = true }
+                        .padding(24.dp, 16.dp, 24.dp, 24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.size(64.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        if (user?.avatar != null) {
+                            AsyncImage(
+                                model = user!!.avatar,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(user?.name?.take(1) ?: "U", style = MaterialTheme.typography.headlineMedium)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(user?.name ?: "AI Explorer", style = MaterialTheme.typography.headlineSmall)
+                        Text("微信号: AI_${user?.id ?: 1}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                     }
                 }
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(user?.name ?: "AI Explorer", style = MaterialTheme.typography.headlineSmall)
-                Text("微信号: AI_${user?.id ?: 1}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
-            }
-        }
 
-        HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
 
-        // 供应商管理标题
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("模型供应商", style = MaterialTheme.typography.titleMedium)
-            IconButton(onClick = { showAddProviderDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
-            }
-        }
+                // 供应商管理标题
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("模型供应商", style = MaterialTheme.typography.titleMedium)
+                    IconButton(onClick = { showAddProviderDialog = true }) {
+                        Icon(Icons.Default.Add, contentDescription = "Add")
+                    }
+                }
 
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(providers) { provider ->
-                ProviderItem(
-                    provider = provider,
-                    isSyncing = isSyncingMap[provider.id] ?: false,
-                    onEdit = { providerToEdit = provider },
-                    onDelete = { providerViewModel.deleteProvider(provider) },
-                    onSync = { providerViewModel.syncModels(provider) }
-                )
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(providers) { provider ->
+                        ProviderItem(
+                            provider = provider,
+                            isSyncing = isSyncingMap[provider.id] ?: false,
+                            onEdit = { providerToEdit = provider },
+                            onDelete = { providerViewModel.deleteProvider(provider) },
+                            onSync = { providerViewModel.syncModels(provider) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -148,12 +172,10 @@ fun UserEditDialog(
     var avatarUri by remember { mutableStateOf(user?.avatar) }
     val context = LocalContext.current
     
-    // 相册选择器
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let { 
-            // 将选择的图片拷贝到内部存储，解决 6 小时失效问题
             val localPath = saveUriToInternalStorage(context, it, "user_avatar_${System.currentTimeMillis()}.jpg")
             avatarUri = localPath
         }
@@ -168,7 +190,6 @@ fun UserEditDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // 点击头像触发选择
                 Surface(
                     modifier = Modifier.size(80.dp).clickable { launcher.launch("image/*") },
                     shape = CircleShape,
@@ -217,6 +238,7 @@ fun ProviderItem(
     onSync: () -> Unit
 ) {
     ListItem(
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         headlineContent = { Text(provider.name) },
         supportingContent = { Text(provider.baseUrl) },
         trailingContent = {

@@ -1,5 +1,6 @@
 package com.example.echochat.ui.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,7 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -18,10 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.echochat.R
 import com.example.echochat.data.local.dao.ChatListItem
 import com.example.echochat.ui.viewmodel.ChatViewModel
 import java.text.SimpleDateFormat
@@ -30,32 +32,48 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatListScreen(
-    onChatClick: (Long?, Long?) -> Unit,
+    onChatClick: (Long?, Long?, Long) -> Unit,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     val chatList by viewModel.chatList.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("EchoChat") })
-        }
+            TopAppBar(
+                title = { Text("EchoChat") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
+        },
+        containerColor = Color.Transparent
     ) { innerPadding ->
-        if (chatList.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("暂无聊天信息", style = MaterialTheme.typography.bodyLarge)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(innerPadding)
-            ) {
-                items(chatList) { item ->
-                    ChatItem(item = item, onClick = {
-                        onChatClick(item.agentId, item.groupId)
-                    })
-                    HorizontalDivider(modifier = Modifier.padding(start = 72.dp))
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            // 背景图
+            Image(
+                painter = painterResource(id = R.drawable.background),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                alpha = 0.3f
+            )
+            
+            if (chatList.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("暂无聊天信息", style = MaterialTheme.typography.bodyLarge)
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(chatList) { item ->
+                        ChatItem(item = item, onClick = {
+                            onChatClick(item.agentId, item.groupId, item.conversationId)
+                        })
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 72.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                        )
+                    }
                 }
             }
         }
@@ -66,6 +84,7 @@ fun ChatListScreen(
 fun ChatItem(item: ChatListItem, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = {
             if (item.isGroup) {
                 Surface(
@@ -81,7 +100,7 @@ fun ChatItem(item: ChatListItem, onClick: () -> Unit) {
                 AsyncImage(
                     model = item.contactAvatar ?: "https://api.dicebear.com/7.x/bottts/svg?seed=${item.contactName}",
                     contentDescription = null,
-                    modifier = Modifier.size(48.dp).clip(CircleShape).background(Color.LightGray),
+                    modifier = Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
                     contentScale = ContentScale.Crop
                 )
             }
@@ -92,7 +111,11 @@ fun ChatItem(item: ChatListItem, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(item.contactName, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    item.contactName, 
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Text(
                     formatTime(item.lastMessageTime),
                     style = MaterialTheme.typography.labelSmall,
@@ -105,7 +128,8 @@ fun ChatItem(item: ChatListItem, onClick: () -> Unit) {
                 item.lastMessage ?: "点击开始聊天",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     )

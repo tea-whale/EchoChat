@@ -21,18 +21,27 @@ class ChatViewModel @Inject constructor(
     private val _contextLimit = MutableStateFlow(20)
     val contextLimit = _contextLimit.asStateFlow()
 
-    // 使用 String key 来区分私聊 (a_id) 和群聊 (g_id)
-    private val messagesFlowMap = mutableMapOf<String, StateFlow<List<MessageEntity>>>()
+    private val _currentConversationId = MutableStateFlow<Long?>(null)
+    val currentConversationId = _currentConversationId.asStateFlow()
 
-    fun getMessages(agentId: Long?, groupId: Long?): StateFlow<List<MessageEntity>> {
-        val key = if (groupId != null) "g_$groupId" else "a_$agentId"
-        return messagesFlowMap.getOrPut(key) {
-            val flow = if (groupId != null) {
-                repository.getMessagesByGroupId(groupId)
-            } else {
-                repository.getMessagesByAgentId(agentId ?: 0L)
-            }
-            flow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    // 监听特定对话的消息流
+    fun getMessages(conversationId: Long): Flow<List<MessageEntity>> {
+        return repository.getMessagesByConversationId(conversationId)
+    }
+
+    // 初始化或切换对话
+    fun initConversation(agentId: Long?, groupId: Long?) {
+        viewModelScope.launch {
+            val id = repository.getOrCreateLatestConversation(agentId, groupId)
+            _currentConversationId.value = id
+        }
+    }
+
+    // 创建全新对话实体
+    fun startNewConversation(agentId: Long?, groupId: Long?) {
+        viewModelScope.launch {
+            val id = repository.createNewConversation(agentId, groupId)
+            _currentConversationId.value = id
         }
     }
 
@@ -41,12 +50,23 @@ class ChatViewModel @Inject constructor(
     }
 
     fun sendMessage(agentId: Long?, groupId: Long?, content: String) {
+        val convId = _currentConversationId.value ?: return
         viewModelScope.launch {
-            if (groupId != null) {
-                repository.sendGroupMessage(groupId, content, _contextLimit.value)
-            } else if (agentId != null) {
-                repository.sendMessage(agentId, content, _contextLimit.value)
-            }
+            repository.sendMessage(convId, agentId, groupId, content, _contextLimit.value)
+        }
+    }
+
+    fun deleteMessage(message: MessageEntity) {
+        viewModelScope.launch {
+            repository.deleteMessage(message)
+        }
+    }
+
+    fun deleteCurrentConversation() {
+        val id = _currentConversationId.value ?: return
+        viewModelScope.launch {
+            repository.deleteConversation(id)
+            _currentConversationId.value = null
         }
     }
 }

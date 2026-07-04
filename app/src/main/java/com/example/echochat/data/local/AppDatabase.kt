@@ -16,9 +16,11 @@ import com.example.echochat.data.local.entity.*
         MomentEntity::class,
         UserEntity::class,
         GroupEntity::class,
-        GroupMemberCrossRef::class
+        GroupMemberCrossRef::class,
+        CommentEntity::class,
+        LikeEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
