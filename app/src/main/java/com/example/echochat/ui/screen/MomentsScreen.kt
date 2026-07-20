@@ -49,12 +49,21 @@ fun MomentsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("朋友圈") },
-                actions = {
-                    IconButton(onClick = { showPostDialog = true }) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = "Post")
+                modifier = Modifier.statusBarsPadding().height(48.dp),
+                windowInsets = WindowInsets(0),
+                title = { 
+                    Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
+                        Text("朋友圈", fontSize = 18.sp) 
                     }
-                }
+                },
+                actions = {
+                    Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
+                        IconButton(onClick = { showPostDialog = true }, modifier = Modifier.size(40.dp)) {
+                            Icon(Icons.Default.CameraAlt, contentDescription = "Post", modifier = Modifier.size(24.dp))
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { innerPadding ->

@@ -24,6 +24,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.echochat.R
@@ -50,7 +51,13 @@ fun MeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("我的") },
+                modifier = Modifier.statusBarsPadding().height(48.dp),
+                windowInsets = WindowInsets(0),
+                title = { 
+                    Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
+                        Text("我的", fontSize = 18.sp) 
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },

@@ -21,6 +21,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.echochat.R
@@ -39,10 +40,21 @@ fun ChatListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("EchoChat") },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
+            Surface(
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                tonalElevation = 3.dp
+            ) {
+                TopAppBar(
+                    modifier = Modifier.statusBarsPadding().height(48.dp),
+                    windowInsets = WindowInsets(0),
+                    title = { 
+                        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
+                            Text("EchoChat", fontSize = 18.sp, style = MaterialTheme.typography.titleMedium) 
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                )
+            }
         },
         containerColor = Color.Transparent
     ) { innerPadding ->

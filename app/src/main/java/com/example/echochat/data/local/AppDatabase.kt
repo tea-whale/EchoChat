@@ -20,7 +20,7 @@ import com.example.echochat.data.local.entity.*
         CommentEntity::class,
         LikeEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

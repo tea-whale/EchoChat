@@ -30,10 +30,16 @@ class ChatViewModel @Inject constructor(
     }
 
     // 初始化或切换对话
-    fun initConversation(agentId: Long?, groupId: Long?) {
+    fun initConversation(agentId: Long?, groupId: Long?, conversationId: Long? = null) {
         viewModelScope.launch {
-            val id = repository.getOrCreateLatestConversation(agentId, groupId)
+            val id = if (conversationId != null && conversationId > 0) {
+                conversationId
+            } else {
+                repository.getOrCreateLatestConversation(agentId, groupId)
+            }
             _currentConversationId.value = id
+            // 加载该对话保存的记忆限制
+            _contextLimit.value = repository.getConversationContextLimit(id)
         }
     }
 
@@ -42,11 +48,16 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             val id = repository.createNewConversation(agentId, groupId)
             _currentConversationId.value = id
+            _contextLimit.value = 20 // 新对话恢复默认值
         }
     }
 
     fun setContextLimit(limit: Int) {
+        val convId = _currentConversationId.value ?: return
         _contextLimit.value = limit
+        viewModelScope.launch {
+            repository.updateConversationContextLimit(convId, limit)
+        }
     }
 
     fun sendMessage(agentId: Long?, groupId: Long?, content: String) {

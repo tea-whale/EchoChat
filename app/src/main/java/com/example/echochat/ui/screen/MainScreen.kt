@@ -104,7 +104,7 @@ fun MainScreen() {
                 ChatDetailScreen(
                     agentId = agentId,
                     groupId = groupId,
-                    //conversationId = conversationId,
+                    conversationId = conversationId,
                     onBack = { navController.popBackStack() }
                 )
             }

@@ -20,137 +20,44 @@ class ChatRepository @Inject constructor(
     private val json: Json
 ) {
     private val AVAILABLE_TOOLS = listOf(
-        Tool(
-            type = "function",
-            function = FunctionDef(
-                name = "create_memory", 
-                description = "记录关于用户的长期记忆，以便在以后的对话中记住。", 
-                parameters = buildJsonObject {
-                    put("type", "object")
-                    putJsonObject("properties") { 
-                        putJsonObject("content") { 
-                            put("type", "string")
-                            put("description", "记忆的具体内容")
-                        } 
-                    }
-                    putJsonArray("required") { add("content") }
-                }
-            )
-        ),
-        Tool(
-            type = "function",
-            function = FunctionDef(
-                name = "post_moment", 
-                description = "在朋友圈发布一条动态。", 
-                parameters = buildJsonObject {
-                    put("type", "object")
-                    putJsonObject("properties") { 
-                        putJsonObject("content") { 
-                            put("type", "string")
-                            put("description", "朋友圈的正文内容")
-                        } 
-                    }
-                    putJsonArray("required") { add("content") }
-                }
-            )
-        ),
-        Tool(
-            type = "function",
-            function = FunctionDef(
-                name = "get_moments_feed",
-                description = "浏览朋友圈最近的动态列表，获取动态内容和ID以便进行评论或点赞。",
-                parameters = buildJsonObject {
-                    put("type", "object")
-                    putJsonObject("properties") {
-                        put("limit", buildJsonObject { put("type", "integer"); put("description", "获取动态的数量，默认10") })
-                    }
-                }
-            )
-        ),
-        Tool(
-            type = "function",
-            function = FunctionDef(
-                name = "comment_moment",
-                description = "评论一条朋友圈动态。",
-                parameters = buildJsonObject {
-                    put("type", "object")
-                    putJsonObject("properties") {
-                        put("momentId", buildJsonObject { put("type", "integer"); put("description", "动态的ID") })
-                        put("content", buildJsonObject { put("type", "string"); put("description", "评论内容") })
-                    }
-                    putJsonArray("required") { add("momentId"); add("content") }
-                }
-            )
-        ),
-        Tool(
-            type = "function",
-            function = FunctionDef(
-                name = "like_moment",
-                description = "给一条朋友圈动态点赞。",
-                parameters = buildJsonObject {
-                    put("type", "object")
-                    putJsonObject("properties") {
-                        put("momentId", buildJsonObject { put("type", "integer"); put("description", "动态的ID") })
-                    }
-                    putJsonArray("required") { add("momentId") }
-                }
-            )
-        ),
-        Tool(
-            type = "function",
-            function = FunctionDef(
-                name = "get_moment_interactions",
-                description = "查看某条朋友圈的详细点赞和评论信息。",
-                parameters = buildJsonObject {
-                    put("type", "object")
-                    putJsonObject("properties") {
-                        put("momentId", buildJsonObject { put("type", "integer"); put("description", "动态的ID") })
-                    }
-                    putJsonArray("required") { add("momentId") }
-                }
-            )
-        )
+        Tool(type = "function", function = FunctionDef(name = "create_memory", description = "记录关于用户的长期记忆。", parameters = buildJsonObject { put("type", "object"); putJsonObject("properties") { putJsonObject("content") { put("type", "string") } }; putJsonArray("required") { add("content") } })),
+        Tool(type = "function", function = FunctionDef(name = "post_moment", description = "在朋友圈发布一条动态。", parameters = buildJsonObject { put("type", "object"); putJsonObject("properties") { putJsonObject("content") { put("type", "string") } }; putJsonArray("required") { add("content") } })),
+        Tool(type = "function", function = FunctionDef(name = "get_moments_feed", description = "获取朋友圈最近的动态列表。", parameters = buildJsonObject { put("type", "object") })),
+        Tool(type = "function", function = FunctionDef(name = "get_moment_details", description = "获取特定动态的详细内容，包括所有点赞者和评论内容。", parameters = buildJsonObject { put("type", "object"); putJsonObject("properties") { putJsonObject("momentId") { put("type", "integer"); put("description", "动态的唯一 ID") } }; putJsonArray("required") { add("momentId") } })),
+        Tool(type = "function", function = FunctionDef(name = "comment_moment", description = "评论朋友圈。", parameters = buildJsonObject { put("type", "object"); putJsonObject("properties") { put("momentId", buildJsonObject { put("type", "integer") }); put("content", buildJsonObject { put("type", "string") }) }; putJsonArray("required") { add("momentId"); add("content") } })),
+        Tool(type = "function", function = FunctionDef(name = "like_moment", description = "点赞朋友圈。", parameters = buildJsonObject { put("type", "object"); putJsonObject("properties") { put("momentId", buildJsonObject { put("type", "integer") }) }; putJsonArray("required") { add("momentId") } }))
     )
 
     fun getChatList(): Flow<List<ChatListItem>> = chatDao.getChatList()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getMessagesByConversationId(conversationId: Long): Flow<List<MessageEntity>> {
-        return chatDao.getMessagesByConversation(conversationId).distinctUntilChanged()
-    }
+    fun getMessagesByConversationId(conversationId: Long): Flow<List<MessageEntity>> = chatDao.getMessagesByConversation(conversationId).distinctUntilChanged()
 
     suspend fun getOrCreateLatestConversation(agentId: Long?, groupId: Long?): Long {
-        val existing = if (groupId != null) chatDao.getLatestConversationByGroupId(groupId)
-                      else chatDao.getLatestConversationByAgentId(agentId ?: 0L)
+        val existing = if (groupId != null) chatDao.getLatestConversationByGroupId(groupId) else chatDao.getLatestConversationByAgentId(agentId ?: 0L)
         return existing?.id ?: chatDao.insertConversation(ConversationEntity(agentId = agentId, groupId = groupId))
     }
 
-    suspend fun createNewConversation(agentId: Long?, groupId: Long?): Long {
-        return chatDao.insertConversation(ConversationEntity(agentId = agentId, groupId = groupId))
+    suspend fun createNewConversation(agentId: Long?, groupId: Long?): Long = chatDao.insertConversation(ConversationEntity(agentId = agentId, groupId = groupId))
+
+    suspend fun getConversationContextLimit(conversationId: Long): Int {
+        return chatDao.getConversationById(conversationId)?.contextLimit ?: 20
+    }
+
+    suspend fun updateConversationContextLimit(conversationId: Long, limit: Int) {
+        chatDao.updateContextLimit(conversationId, limit)
     }
 
     suspend fun sendMessage(conversationId: Long, agentId: Long?, groupId: Long?, content: String, contextLimit: Int) {
         chatDao.insertMessage(MessageEntity(conversationId = conversationId, role = "user", content = content))
-        
         if (groupId != null) {
             val agents = chatDao.getAgentsByGroupId(groupId)
-            for (agent in agents) {
-                delay(800)
-                processAgentResponse(conversationId, agent.id, contextLimit)
-            }
-        } else if (agentId != null) {
-            processAgentResponse(conversationId, agentId, contextLimit)
-        }
+            for (agent in agents) { delay(800); processAgentResponse(conversationId, agent.id, contextLimit) }
+        } else if (agentId != null) { processAgentResponse(conversationId, agentId, contextLimit) }
     }
 
-    suspend fun deleteConversation(conversationId: Long) {
-        chatDao.deleteMessagesByConversation(conversationId)
-        chatDao.deleteConversation(conversationId)
-    }
-
-    suspend fun deleteMessage(message: MessageEntity) {
-        chatDao.deleteMessage(message)
-    }
+    suspend fun deleteConversation(conversationId: Long) { chatDao.deleteMessagesByConversation(conversationId); chatDao.deleteConversation(conversationId) }
+    suspend fun deleteMessage(message: MessageEntity) = chatDao.deleteMessage(message)
 
     private suspend fun processAgentResponse(conversationId: Long, agentId: Long, contextLimit: Int) {
         val agent = chatDao.getAgentById(agentId) ?: return
@@ -159,35 +66,24 @@ class ChatRepository @Inject constructor(
         val url = if (provider.baseUrl.endsWith("/")) "${provider.baseUrl}chat/completions" else "${provider.baseUrl}/chat/completions"
 
         val memories = chatDao.getMemoriesByAgent(agentId)
-        var systemPrompt = agent.systemPrompt
+        var systemPrompt = agent.systemPrompt + "\n\n请直接回答内容，严禁在回复中带上任何 [姓名]: 或类似的姓名占位符前缀。"
         
         val conv = chatDao.getConversationById(conversationId)
-        val groupInfo = conv?.groupId?.let { gid ->
-            val group = chatDao.getGroupById(gid)
-            val members = chatDao.getAgentsByGroupId(gid)
-            group to members
-        }
-        
+        val groupInfo = conv?.groupId?.let { gid -> chatDao.getGroupById(gid) to chatDao.getAgentsByGroupId(gid) }
         if (groupInfo != null) {
-            val (group, members) = groupInfo
-            systemPrompt += "\n\n你现在处于群聊 \"${group?.name}\" 中。"
-            systemPrompt += "\n群聊成员包括: 你(${agent.name}), " + members.filter { it.id != agentId }.joinToString(", ") { it.name } + ", 以及用户。"
+            systemPrompt += "\n你当前处于群聊中。你会通过 API 的 name 字段识别说话人。请不要代发其他成员的消息。"
         }
-        
-        if (memories.isNotEmpty()) {
-            systemPrompt += "\n\n[你的长期记忆]\n" + memories.joinToString("\n") { "- ${it.content}" }
-        }
+        if (memories.isNotEmpty()) systemPrompt += "\n[长期记忆]\n" + memories.joinToString("\n") { "- ${it.content}" }
 
-        val limit = if (contextLimit <= 0) 1000 else contextLimit
+        val finalLimit = conv?.contextLimit ?: contextLimit
+        val limit = if (finalLimit <= 0) 1000 else finalLimit
+        
         val recentMessages = chatDao.getRecentMessages(conversationId, limit)
         val apiMessages = mutableListOf(ChatMessage(role = "system", content = systemPrompt))
-        
         val allAgentsMap = chatDao.getAllAgents().first().associateBy { it.id }
 
         recentMessages.reversed().forEach { msg ->
-            val toolCalls = msg.toolCallsJson?.let { 
-                try { json.decodeFromString<List<ToolCall>>(it) } catch(e: Exception) { null }
-            }
+            val toolCalls = msg.toolCallsJson?.let { try { json.decodeFromString<List<ToolCall>>(it) } catch(e: Exception) { null } }
             val senderName = when {
                 msg.role == "user" -> "User"
                 msg.senderId != null -> allAgentsMap[msg.senderId]?.name
@@ -195,11 +91,7 @@ class ChatRepository @Inject constructor(
             }
             apiMessages.add(ChatMessage(
                 role = msg.role,
-                content = if (toolCalls != null || msg.toolCallId != null) {
-                    if (msg.content.isEmpty()) null else msg.content
-                } else {
-                    if (groupInfo != null && senderName != null && msg.role != "tool") "[$senderName]: ${msg.content}" else msg.content
-                },
+                content = if (toolCalls != null || msg.toolCallId != null) { if (msg.content.isEmpty()) null else msg.content } else { msg.content },
                 toolCallId = msg.toolCallId,
                 toolCalls = toolCalls,
                 name = senderName?.filter { it.isLetterOrDigit() || it == '_' }
@@ -207,15 +99,10 @@ class ChatRepository @Inject constructor(
         }
 
         var turn = 0
-        var shouldContinue = true
-        while (shouldContinue && turn < 5) {
+        while (turn < 5) {
             turn++
             try {
-                val response = apiService.chatCompletions(
-                    url = url, 
-                    auth = "Bearer ${provider.apiKey}", 
-                    request = ChatRequest(model = model.remoteModelId, messages = apiMessages, tools = AVAILABLE_TOOLS)
-                )
+                val response = apiService.chatCompletions(url = url, auth = "Bearer ${provider.apiKey}", request = ChatRequest(model = model.remoteModelId, messages = apiMessages, tools = AVAILABLE_TOOLS))
                 val assistantMsg = response.choices.firstOrNull()?.message ?: break
                 if (!assistantMsg.toolCalls.isNullOrEmpty()) {
                     chatDao.insertMessage(MessageEntity(conversationId = conversationId, senderId = agentId, role = "assistant", content = assistantMsg.content ?: "", toolCallsJson = json.encodeToString(assistantMsg.toolCalls)))
@@ -228,14 +115,17 @@ class ChatRepository @Inject constructor(
                 } else {
                     val fullContent = assistantMsg.content ?: ""
                     if (fullContent.isNotBlank()) {
-                        val cleanContent = fullContent.replace(Regex("^\\[[^\\]]+\\][:：]\\s*"), "")
-                        chatDao.insertMessage(MessageEntity(conversationId = conversationId, senderId = agentId, role = "assistant", content = cleanContent.trim()))
+                        val cleanContent = fullContent.replace(Regex("^\\[[^\\]]+\\][:：]\\s*"), "").trim()
+                        val parts = cleanContent.split("\n").filter { it.isNotBlank() }
+                        for (part in parts) {
+                            chatDao.insertMessage(MessageEntity(conversationId = conversationId, senderId = agentId, role = "assistant", content = part.trim()))
+                        }
                     }
-                    shouldContinue = false
+                    break
                 }
             } catch (e: Exception) {
-                chatDao.insertMessage(MessageEntity(conversationId = conversationId, senderId = agentId, role = "assistant", content = "API 异常: ${e.message}"))
-                shouldContinue = false
+                chatDao.insertMessage(MessageEntity(conversationId = conversationId, senderId = agentId, role = "assistant", content = "服务异常"))
+                break
             }
         }
     }
@@ -244,40 +134,33 @@ class ChatRepository @Inject constructor(
         return try {
             val args = json.parseToJsonElement(toolCall.function.arguments).jsonObject
             when (toolCall.function.name) {
-                "create_memory" -> {
-                    val c = args["content"]?.jsonPrimitive?.content ?: ""
-                    chatDao.insertMemory(MemoryEntity(agentId = agentId, content = c))
-                    "已存入长期记忆。"
+                "create_memory" -> { chatDao.insertMemory(MemoryEntity(agentId = agentId, content = args["content"]?.jsonPrimitive?.content ?: "")); "记忆已保存" }
+                "post_moment" -> { chatDao.insertMoment(MomentEntity(agentId = agentId, content = args["content"]?.jsonPrimitive?.content ?: "")); "动态已发布" }
+                "get_moments_feed" -> { chatDao.getAllMomentsWithAgent().first().take(10).joinToString("\n") { "ID:${it.id}|作者:${it.agentName ?: "用户"}|内容:${it.content}" } }
+                "get_moment_details" -> {
+                    val momentId = args["momentId"]?.jsonPrimitive?.longOrNull ?: 0L
+                    val moment = chatDao.getMomentById(momentId)
+                    if (moment == null) {
+                        "未找到该动态 (ID: $momentId)"
+                    } else {
+                        val likes = chatDao.getLikesForMoment(momentId).first()
+                        val comments = chatDao.getCommentsForMoment(momentId).first()
+                        val authorName = if (moment.agentId != null) chatDao.getAgentById(moment.agentId)?.name ?: "未知" else "用户"
+                        buildString {
+                            append("动态详情 (ID: $momentId):\n")
+                            append("作者: $authorName\n")
+                            append("内容: ${moment.content}\n")
+                            append("点赞: ${if (likes.isEmpty()) "暂无" else likes.joinToString { it.senderName }}\n")
+                            append("评论:\n")
+                            if (comments.isEmpty()) append("暂无") else comments.forEach { append("- ${it.senderName}: ${it.content}\n") }
+                        }
+                    }
                 }
-                "post_moment" -> {
-                    val c = args["content"]?.jsonPrimitive?.content ?: ""
-                    chatDao.insertMoment(MomentEntity(agentId = agentId, content = c))
-                    "动态已发布。"
-                }
-                "get_moments_feed" -> {
-                    val moments = chatDao.getAllMomentsWithAgent().first().take(10)
-                    moments.joinToString("\n") { "ID:${it.id} | 作者:${it.agentName ?: "用户"} | 内容:${it.content}" }
-                }
-                "comment_moment" -> {
-                    val mId = args["momentId"]?.jsonPrimitive?.longOrNull ?: return "ID无效"
-                    val content = args["content"]?.jsonPrimitive?.content ?: ""
-                    chatDao.insertComment(CommentEntity(momentId = mId, senderId = agentId, senderName = agentName, content = content))
-                    "已发表评论。"
-                }
-                "like_moment" -> {
-                    val mId = args["momentId"]?.jsonPrimitive?.longOrNull ?: return "ID无效"
-                    chatDao.insertLike(LikeEntity(momentId = mId, senderId = agentId, senderName = agentName))
-                    "已点赞。"
-                }
-                "get_moment_interactions" -> {
-                    val mId = args["momentId"]?.jsonPrimitive?.longOrNull ?: return "ID无效"
-                    val likes = chatDao.getLikesForMoment(mId).first().joinToString { it.senderName }
-                    val comments = chatDao.getCommentsForMoment(mId).first().joinToString("\n") { "${it.senderName}: ${it.content}" }
-                    "点赞者: $likes \n评论:\n$comments"
-                }
-                else -> "未知工具"
+                "comment_moment" -> { chatDao.insertComment(CommentEntity(momentId = args["momentId"]?.jsonPrimitive?.longOrNull ?: 0L, senderId = agentId, senderName = agentName, content = args["content"]?.jsonPrimitive?.content ?: "")); "评论成功" }
+                "like_moment" -> { chatDao.insertLike(LikeEntity(momentId = args["momentId"]?.jsonPrimitive?.longOrNull ?: 0L, senderId = agentId, senderName = agentName)); "点赞成功" }
+                else -> "成功"
             }
-        } catch (e: Exception) { "错误: ${e.message}" }
+        } catch (e: Exception) { "错误" }
     }
     
     fun getLikesForMoment(momentId: Long) = chatDao.getLikesForMoment(momentId)

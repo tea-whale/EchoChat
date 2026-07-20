@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.echochat.R
@@ -38,6 +39,7 @@ import com.example.echochat.ui.viewmodel.UserViewModel
 fun ChatDetailScreen(
     agentId: Long? = null,
     groupId: Long? = null,
+    conversationId: Long? = null,
     onBack: () -> Unit,
     chatViewModel: ChatViewModel = hiltViewModel(),
     agentViewModel: AgentViewModel = hiltViewModel(),
@@ -64,8 +66,8 @@ fun ChatDetailScreen(
     val listState = rememberLazyListState()
     var showMenu by remember { mutableStateOf(false) }
 
-    LaunchedEffect(agentId, groupId) {
-        chatViewModel.initConversation(agentId, groupId)
+    LaunchedEffect(agentId, groupId, conversationId) {
+        chatViewModel.initConversation(agentId, groupId, conversationId)
     }
 
     LaunchedEffect(messages.size) {
@@ -76,54 +78,69 @@ fun ChatDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "返回") }
-                },
-                actions = {
-                    Box {
-                        IconButton(onClick = { showMenu = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "更多")
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 3.dp,
+                modifier = Modifier.statusBarsPadding()
+            ) {
+                CenterAlignedTopAppBar(
+                    modifier = Modifier.height(48.dp),
+                    windowInsets = WindowInsets(0),
+                    title = { 
+                        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
+                            Text(title, style = MaterialTheme.typography.titleMedium, fontSize = 17.sp) 
                         }
-                        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                            DropdownMenuItem(
-                                text = { Text("开启新对话") },
-                                onClick = {
-                                    chatViewModel.startNewConversation(agentId, groupId)
-                                    showMenu = false
-                                },
-                                leadingIcon = { Icon(Icons.Default.CleaningServices, null) }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("删除此对话记录") },
-                                onClick = {
-                                    chatViewModel.deleteCurrentConversation()
-                                    showMenu = false
-                                    onBack()
-                                },
-                                leadingIcon = { Icon(Icons.Default.Delete, null) }
-                            )
-                            HorizontalDivider()
-                            Text("上下文限制", modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelMedium)
-                            listOf(10, 20, 100, -1).forEach { limit ->
-                                DropdownMenuItem(
-                                    text = { Text(if (limit == -1) "不限制" else "${limit}条") },
-                                    onClick = {
-                                        chatViewModel.setContextLimit(limit)
-                                        showMenu = false
-                                    },
-                                    trailingIcon = {
-                                        if (contextLimit == limit) {
-                                            RadioButton(selected = true, onClick = null)
-                                        }
-                                    }
-                                )
+                    },
+                    navigationIcon = {
+                        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
+                            IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) { 
+                                Icon(Icons.Default.ArrowBack, "返回", modifier = Modifier.size(24.dp)) 
                             }
                         }
-                    }
-                }
-            )
+                    },
+                    actions = {
+                        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
+                            IconButton(onClick = { showMenu = true }, modifier = Modifier.size(40.dp)) {
+                                Icon(Icons.Default.MoreVert, "更多", modifier = Modifier.size(24.dp))
+                            }
+                            DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                                DropdownMenuItem(
+                                    text = { Text("开启新对话") },
+                                    onClick = {
+                                        chatViewModel.startNewConversation(agentId, groupId)
+                                        showMenu = false
+                                    },
+                                    leadingIcon = { Icon(Icons.Default.CleaningServices, null) }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("删除此对话记录") },
+                                    onClick = {
+                                        chatViewModel.deleteCurrentConversation()
+                                        showMenu = false
+                                        onBack()
+                                    },
+                                    leadingIcon = { Icon(Icons.Default.Delete, null) }
+                                )
+                                HorizontalDivider()
+                                Text("记忆限制", modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
+                                listOf(10, 20, 100, -1).forEach { limit ->
+                                    DropdownMenuItem(
+                                        text = { Text(if (limit == -1) "不限制" else "${limit}条") },
+                                        onClick = {
+                                            chatViewModel.setContextLimit(limit)
+                                            showMenu = false
+                                        },
+                                        trailingIcon = { if (contextLimit == limit) RadioButton(selected = true, onClick = null) }
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Transparent
+                    )
+                )
+            }
         },
         bottomBar = {
             Surface(tonalElevation = 2.dp) {
@@ -135,14 +152,18 @@ fun ChatDetailScreen(
                         value = inputText,
                         onValueChange = { inputText = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("输入消息...") },
-                        shape = RoundedCornerShape(20.dp),
+                        placeholder = { Text("输入消息...", fontSize = 14.sp) },
+                        shape = RoundedCornerShape(24.dp),
+                        textStyle = MaterialTheme.typography.bodyMedium,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.surface,
                             unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                        )
+                        ),
+                        maxLines = 4
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
                     IconButton(
+                        modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
                         onClick = {
                             if (inputText.isNotBlank()) {
                                 chatViewModel.sendMessage(agentId, groupId, inputText)
@@ -150,14 +171,14 @@ fun ChatDetailScreen(
                             }
                         }
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.Send, "发送", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.AutoMirrored.Filled.Send, "发送", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
                     }
                 }
             }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            // 背景图处理
+            // 背景图
             if (agent?.chatBackground != null) {
                 AsyncImage(
                     model = agent.chatBackground,
@@ -172,7 +193,7 @@ fun ChatDetailScreen(
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
-                    alpha = 0.3f
+                    alpha = 0.2f 
                 )
             }
 
@@ -218,7 +239,7 @@ fun MessageBubble(
             AsyncImage(
                 model = senderAvatar ?: "https://api.dicebear.com/7.x/bottts/svg?seed=${senderName ?: "Agent"}",
                 contentDescription = null,
-                modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
                 contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -244,7 +265,7 @@ fun MessageBubble(
                     )
                 ) {
                     Text(
-                        "系统动作: ${message.content}", 
+                        "动作: ${message.content}", 
                         style = MaterialTheme.typography.labelSmall, 
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(4.dp)
@@ -270,6 +291,7 @@ fun MessageBubble(
                         Text(
                             message.content, 
                             style = MaterialTheme.typography.bodyLarge,
+                            fontSize = 15.sp,
                             color = if (isUser) Color.Black else MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -278,7 +300,7 @@ fun MessageBubble(
             
             DropdownMenu(expanded = showDeleteMenu, onDismissRequest = { showDeleteMenu = false }) {
                 DropdownMenuItem(
-                    text = { Text("删除此消息") },
+                    text = { Text("删除") },
                     onClick = {
                         onDelete()
                         showDeleteMenu = false
@@ -294,15 +316,15 @@ fun MessageBubble(
                 AsyncImage(
                     model = userAvatar,
                     contentDescription = null,
-                    modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Box(
-                    modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), 
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), 
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("我", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text("我", color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 12.sp)
                 }
             }
         }

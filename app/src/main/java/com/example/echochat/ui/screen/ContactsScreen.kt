@@ -24,6 +24,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.echochat.R
@@ -47,21 +48,37 @@ fun ContactsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("联系人") },
-                actions = {
-                    IconButton(onClick = { showGroupDialog = true }) {
-                        Icon(Icons.Default.GroupAdd, contentDescription = "发起群聊")
-                    }
-                    IconButton(onClick = {
-                        agentToEdit = null
-                        showEditDialog = true
-                    }) {
-                        Icon(Icons.Default.Add, contentDescription = "添加助手")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
+            Surface(
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                tonalElevation = 3.dp,
+                modifier = Modifier.statusBarsPadding()
+            ) {
+                TopAppBar(
+                    modifier = Modifier.height(48.dp),
+                    windowInsets = WindowInsets(0),
+                    title = { 
+                        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
+                            Text("联系人", fontSize = 18.sp, style = MaterialTheme.typography.titleMedium) 
+                        }
+                    },
+                    actions = {
+                        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { showGroupDialog = true }, modifier = Modifier.size(40.dp)) {
+                                    Icon(Icons.Default.GroupAdd, contentDescription = "发起群聊", modifier = Modifier.size(24.dp))
+                                }
+                                IconButton(onClick = {
+                                    agentToEdit = null
+                                    showEditDialog = true
+                                }, modifier = Modifier.size(40.dp)) {
+                                    Icon(Icons.Default.Add, contentDescription = "添加助手", modifier = Modifier.size(24.dp))
+                                }
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                )
+            }
         },
         containerColor = Color.Transparent
     ) { innerPadding ->

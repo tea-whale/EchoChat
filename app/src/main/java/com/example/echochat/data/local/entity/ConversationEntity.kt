@@ -27,5 +27,6 @@ data class ConversationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val agentId: Long? = null,
     val groupId: Long? = null,
+    val contextLimit: Int = 20, // 新增：持久化存储上下文限制
     val createdAt: Long = System.currentTimeMillis()
 )

@@ -107,6 +107,9 @@ interface ChatDao {
     @Query("SELECT * FROM conversations WHERE groupId = :groupId ORDER BY createdAt DESC LIMIT 1")
     suspend fun getLatestConversationByGroupId(groupId: Long): ConversationEntity?
     
+    @Query("UPDATE conversations SET contextLimit = :limit WHERE id = :conversationId")
+    suspend fun updateContextLimit(conversationId: Long, limit: Int)
+
     @Query("DELETE FROM messages WHERE conversationId = :conversationId")
     suspend fun deleteMessagesByConversation(conversationId: Long)
 
